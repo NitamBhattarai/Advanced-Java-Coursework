@@ -1,11 +1,10 @@
 package com.restaurantmanagementsystem.dao;
 
-import com.restaurantManagementSystem.model.Reservation;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.model.Reservation;
+import com.restaurantmanagementsystem.util.DBConnection;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * ReservationDAO — CRUD operations for table reservations.

@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.utils;
+package com.restaurantManagementSystem.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,9 +12,9 @@ import java.sql.SQLException;
  */
 public class DBConnection {
 
-    private static final String URL      = "jdbc:mysql://localhost:3306/restaurant_management_system";
+    private static final String URL      = "jdbc:mysql://localhost:3307/restaurant_management_system";
     private static final String USER     = "root";
-    private static final String PASSWORD = "1234"; // update for your environment
+    private static final String PASSWORD = "@window09"; // update for your environment
 
     static {
         try {

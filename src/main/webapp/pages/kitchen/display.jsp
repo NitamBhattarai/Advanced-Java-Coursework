@@ -6,6 +6,7 @@
 <%@ include file="/pages/errorpages/header.jsp" %>
 
 
+
 <!-- TOP NAV — same brand, same height as every page -->
 <nav class="bg-white/96 backdrop-blur-md border-b border-black/10 h-16 flex items-center justify-between px-8 sticky top-0 z-50">
   <div class="flex items-center gap-4">
@@ -47,7 +48,7 @@
 </div>
 
 <!-- ORDER TICKETS BOARD -->
-<div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-screen bg-paper2" id="board">
+<div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 min-h-screen bg-paper2" id="board">
 
   <c:choose>
     <c:when test="${empty orders}">
@@ -78,11 +79,11 @@
           <div class="h-[3px] w-full" style="background:${stripeColor}"></div>
 
           <!-- Ticket header -->
-          <div class="px-4 py-3 border-b border-black/8 flex items-start justify-between">
+          <div class="px-3 py-2 border-b border-black/8 flex items-start justify-between">
             <div>
               <div class="font-serif text-2xl font-medium text-ink
                           ${o.status.name() == 'READY' ? 'text-green-700' : ''}">
-                ${o.tableNumber}
+                  ${o.tableNumber}
               </div>
               <span class="badge badge-${o.status.name().toLowerCase()} mt-1 inline-flex">${o.status}</span>
             </div>
@@ -97,7 +98,7 @@
           </div>
 
           <!-- Items list -->
-          <div class="px-4 py-3 flex-1">
+          <div class="px-3 py-2 flex-1">
             <c:forEach items="${o.items}" var="item">
               <div class="flex items-start justify-between py-1.5 border-b border-black/5 last:border-0">
                 <div>
@@ -115,7 +116,7 @@
           </div>
 
           <!-- Action buttons -->
-          <div class="px-4 py-3 border-t border-black/8 flex gap-2">
+          <div class="px-3 py-2 border-t border-black/8 flex gap-2">
             <c:choose>
               <c:when test="${o.status.name() == 'PENDING'}">
                 <button onclick="updateStatus(${o.id}, 'PREPARING', this)"
@@ -133,6 +134,19 @@
                   Mark Ready
                 </button>
               </c:when>
+              <c:when test="${o.status.name() == 'READY'}">
+                <button onclick="updateStatus(${o.id}, 'SERVED', this)"
+                        class="flex-1 py-2 text-xs font-medium rounded
+                               bg-blue-50 border border-blue-300 text-blue-800
+                               hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">
+                  Mark Served
+                </button>
+              </c:when>
+              <c:when test="${o.status.name() == 'SERVED'}">
+                <button class="flex-1 py-2 text-xs font-medium rounded bg-paper border border-black/10 text-muted cursor-default">
+                  ✓ Served
+                </button>
+              </c:when>
               <c:otherwise>
                 <button class="flex-1 py-2 text-xs font-medium rounded bg-paper border border-black/10 text-muted cursor-default">
                   ✓ Ready to Serve
@@ -148,101 +162,108 @@
 </div>
 
 <script>
-// ── CONTROLLER: status updates (AJAX to KitchenController) ──
-function updateStatus(orderId, newStatus, btn) {
-  btn.disabled = true;
-  btn.textContent = '…';
-  fetch('${pageContext.request.contextPath}/kitchen/update', {
-    method: 'POST',
-    headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    body: 'orderId=' + orderId + '&status=' + newStatus
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      // Update ticket visually
-      const ticket = document.querySelector('[data-id="' + orderId + '"]');
-      if (ticket) {
-        ticket.dataset.status = newStatus;
-        updateTicketVisuals(ticket, newStatus);
-        updateCounts();
+  // ── CONTROLLER: status updates (AJAX to KitchenController) ──
+  function updateStatus(orderId, newStatus, btn) {
+    btn.disabled = true;
+    btn.textContent = '…';
+    fetch('${pageContext.request.contextPath}/kitchen/update', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'orderId=' + orderId + '&status=' + newStatus
+    })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                // Update ticket visually
+                const ticket = document.querySelector('[data-id="' + orderId + '"]');
+                if (ticket) {
+                  ticket.dataset.status = newStatus;
+                  updateTicketVisuals(ticket, newStatus);
+                  updateCounts();
+                }
+              } else {
+                btn.disabled = false;
+                btn.textContent = 'Retry';
+                alert('Update failed: ' + data.error);
+              }
+            })
+            .catch(() => {
+              btn.disabled = false;
+              btn.textContent = 'Retry';
+            });
+  }
+
+  function updateTicketVisuals(ticket, status) {
+    const stripes = {PENDING:'#e8b44a', PREPARING:'#e8734a', READY:'#3aad6a', SERVED:'#4a80d0'};
+    ticket.querySelector('.h-\\[3px\\]').style.background = stripes[status] || '#e8b44a';
+    const actionDiv = ticket.querySelector('.border-t');
+    const orderId = ticket.dataset.id;
+    if (status === 'READY') {
+      actionDiv.innerHTML = `<button onclick="updateStatus(${orderId}, 'SERVED', this)" class="flex-1 py-2 text-xs font-medium rounded bg-blue-50 border border-blue-300 text-blue-800 hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">Mark Served</button>`;
+    } else if (status === 'PREPARING') {
+      actionDiv.innerHTML = `<button onclick="updateStatus(${orderId}, 'READY', this)" class="flex-1 py-2 text-xs font-medium rounded bg-forest/8 border border-forest/20 text-forest hover:bg-forest hover:text-white hover:border-forest transition-all">Mark Ready</button>`;
+    } else if (status === 'SERVED') {
+      ticket.remove();
+      updateCounts();
+      return;
+    }
+    // Update badge
+    const badge = ticket.querySelector('.badge');
+    if (badge) {
+      badge.className = 'badge badge-' + status.toLowerCase() + ' mt-1 inline-flex';
+      badge.textContent = status;
+    }
+  }
+
+  // ── Filter tickets ──
+  let currentFilter = 'ALL';
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.flt-btn').forEach(b => {
+      b.classList.remove('bg-forest','text-white','border-forest');
+      b.classList.add('text-muted','border-black/16','bg-transparent');
+    });
+    btn.classList.remove('text-muted','border-black/16','bg-transparent');
+    btn.classList.add('bg-forest','text-white','border-forest');
+    document.querySelectorAll('.ticket').forEach(t => {
+      t.style.display = (f === 'ALL' || t.dataset.status === f) ? '' : 'none';
+    });
+  }
+
+  // ── Elapsed time display ──
+  function updateElapsed() {
+    document.querySelectorAll('[data-ordered]').forEach(el => {
+      const placed = new Date(el.dataset.ordered.replace('T',' '));
+      const mins = Math.floor((Date.now() - placed.getTime()) / 60000);
+      el.textContent = mins + 'm ago';
+    });
+  }
+
+  // ── Count badges ──
+  function updateCounts() {
+    const counts = {ALL:0, PENDING:0, PREPARING:0, READY:0};
+    document.querySelectorAll('.ticket').forEach(t => {
+      if (t.style.display !== 'none' || currentFilter === 'ALL') {
+        counts.ALL++;
+        counts[t.dataset.status] = (counts[t.dataset.status]||0) + 1;
       }
-    } else {
-      btn.disabled = false;
-      btn.textContent = 'Retry';
-      alert('Update failed: ' + data.error);
-    }
-  })
-  .catch(() => {
-    btn.disabled = false;
-    btn.textContent = 'Retry';
-  });
-}
-
-function updateTicketVisuals(ticket, status) {
-  const stripes = {PENDING:'#e8b44a', PREPARING:'#e8734a', READY:'#3aad6a', SERVED:'#4a80d0'};
-  ticket.querySelector('.h-\\[3px\\]').style.background = stripes[status] || '#e8b44a';
-  const actionDiv = ticket.querySelector('.px-4.py-3.border-t');
-  if (status === 'READY') {
-    actionDiv.innerHTML = `<button class="flex-1 py-2 text-xs font-medium rounded bg-paper border border-black/10 text-muted cursor-default">✓ Ready to Serve</button>`;
+    });
+    ['ALL','PENDING','PREPARING','READY'].forEach(k => {
+      const el = document.getElementById('cnt-'+k);
+      if (el) el.textContent = counts[k] || 0;
+    });
   }
-  // Update badge
-  const badge = ticket.querySelector('.badge');
-  if (badge) {
-    badge.className = 'badge badge-' + status.toLowerCase() + ' mt-1 inline-flex';
-    badge.textContent = status;
+
+  // ── Live clock ──
+  function tick() {
+    const n = new Date();
+    document.getElementById('clock').textContent =
+            n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
   }
-}
 
-// ── Filter tickets ──
-let currentFilter = 'ALL';
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.flt-btn').forEach(b => {
-    b.classList.remove('bg-forest','text-white','border-forest');
-    b.classList.add('text-muted','border-black/16','bg-transparent');
-  });
-  btn.classList.remove('text-muted','border-black/16','bg-transparent');
-  btn.classList.add('bg-forest','text-white','border-forest');
-  document.querySelectorAll('.ticket').forEach(t => {
-    t.style.display = (f === 'ALL' || t.dataset.status === f) ? '' : 'none';
-  });
-}
-
-// ── Elapsed time display ──
-function updateElapsed() {
-  document.querySelectorAll('[data-ordered]').forEach(el => {
-    const placed = new Date(el.dataset.ordered.replace('T',' '));
-    const mins = Math.floor((Date.now() - placed.getTime()) / 60000);
-    el.textContent = mins + 'm ago';
-  });
-}
-
-// ── Count badges ──
-function updateCounts() {
-  const counts = {ALL:0, PENDING:0, PREPARING:0, READY:0};
-  document.querySelectorAll('.ticket').forEach(t => {
-    if (t.style.display !== 'none' || currentFilter === 'ALL') {
-      counts.ALL++;
-      counts[t.dataset.status] = (counts[t.dataset.status]||0) + 1;
-    }
-  });
-  ['ALL','PENDING','PREPARING','READY'].forEach(k => {
-    const el = document.getElementById('cnt-'+k);
-    if (el) el.textContent = counts[k] || 0;
-  });
-}
-
-// ── Live clock ──
-function tick() {
-  const n = new Date();
-  document.getElementById('clock').textContent =
-    n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
-}
-
-setInterval(tick, 1000); tick();
-setInterval(updateElapsed, 30000); updateElapsed();
-updateCounts();
+  setInterval(tick, 1000); tick();
+  setInterval(updateElapsed, 30000); updateElapsed();
+  updateCounts();
 </script>
 </body>
 </html>

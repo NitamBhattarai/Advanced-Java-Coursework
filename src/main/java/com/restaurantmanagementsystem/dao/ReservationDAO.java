@@ -1,11 +1,10 @@
-package com.restaurantmanagementsystem.dao;
+package com.restaurantManagementSystem.dao;
 
 import com.restaurantManagementSystem.model.Reservation;
 import com.restaurantManagementSystem.util.DBConnection;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * ReservationDAO — CRUD operations for table reservations.
@@ -24,8 +23,8 @@ public class ReservationDAO {
                 + "WHERE r.status != 'CANCELLED' AND r.reserved_at >= NOW() "
                 + "ORDER BY r.reserved_at ASC LIMIT 100";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next())
                 list.add(mapRow(rs));
         }
@@ -40,8 +39,8 @@ public class ReservationDAO {
                 + "LEFT JOIN dining_tables t ON r.table_id = t.id "
                 + "ORDER BY r.reserved_at DESC LIMIT 200";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next())
                 list.add(mapRow(rs));
         }
@@ -55,7 +54,7 @@ public class ReservationDAO {
                 + "LEFT JOIN dining_tables t ON r.table_id = t.id "
                 + "WHERE r.id = ?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next())
@@ -72,7 +71,7 @@ public class ReservationDAO {
         String sql = "INSERT INTO reservations(table_id, party_size, reserved_at, status, notes) "
                 + "VALUES(?, ?, ?, 'PENDING', ?)";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             if (res.getTableId() != null)
                 ps.setInt(1, res.getTableId());
             else
@@ -97,7 +96,7 @@ public class ReservationDAO {
     public boolean updateStatus(int id, Reservation.Status status) throws SQLException {
         String sql = "UPDATE reservations SET status = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
@@ -108,7 +107,7 @@ public class ReservationDAO {
     public boolean update(Reservation res) throws SQLException {
         String sql = "UPDATE reservations SET table_id=?, party_size=?, reserved_at=?, status=?, notes=? WHERE id=?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             if (res.getTableId() != null)
                 ps.setInt(1, res.getTableId());
             else

@@ -1,13 +1,10 @@
-package com.restaurantmanagementsystem.controller;
+package com.restaurantManagementSystem.controller;
 
 import com.restaurantManagementSystem.dao.UserDAO;
 import com.restaurantManagementSystem.model.User;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 
 /**

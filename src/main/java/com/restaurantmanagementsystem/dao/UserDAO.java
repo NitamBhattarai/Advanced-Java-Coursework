@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.dao;
+package com.restaurantManagementSystem.dao;
 
 import com.restaurantManagementSystem.model.User;
 import com.restaurantManagementSystem.util.DBConnection;

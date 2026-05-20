@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.utils;
+package com.restaurantManagementSystem.util;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  */
 public class ValidationUtil {
 
-    // ── Regex patterns ─────────────────────────────────────────────────────────
+
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
 

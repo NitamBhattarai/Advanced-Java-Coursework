@@ -18,6 +18,7 @@ public class MenuItemDAO {
     public List<MenuItem> findAll() throws SQLException {
         List<MenuItem> list = new ArrayList<>();
         String sql = "SELECT m.*, c.name AS cat_name "
+<<<<<<< HEAD
                 + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
                 + "ORDER BY c.display_order, m.name";
         try (Connection conn = DBConnection.getConnection();
@@ -25,6 +26,14 @@ public class MenuItemDAO {
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next())
                 list.add(mapRow(rs));
+=======
+                   + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
+                   + "ORDER BY c.display_order, m.name";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
         }
         return list;
     }
@@ -33,6 +42,7 @@ public class MenuItemDAO {
     public List<MenuItem> findAvailable() throws SQLException {
         List<MenuItem> list = new ArrayList<>();
         String sql = "SELECT m.*, c.name AS cat_name "
+<<<<<<< HEAD
                 + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
                 + "WHERE m.available = 1 ORDER BY c.display_order, m.name";
         try (Connection conn = DBConnection.getConnection();
@@ -40,6 +50,14 @@ public class MenuItemDAO {
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next())
                 list.add(mapRow(rs));
+=======
+                   + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
+                   + "WHERE m.available = 1 ORDER BY c.display_order, m.name";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
         }
         return list;
     }
@@ -60,6 +78,7 @@ public class MenuItemDAO {
     /** Find a single item by ID. */
     public MenuItem findById(int id) throws SQLException {
         String sql = "SELECT m.*, c.name AS cat_name "
+<<<<<<< HEAD
                 + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
                 + "WHERE m.id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -68,6 +87,15 @@ public class MenuItemDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next())
                     return mapRow(rs);
+=======
+                   + "FROM menu_items m JOIN categories c ON m.category_id = c.id "
+                   + "WHERE m.id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
             }
         }
         return null;
@@ -78,9 +106,15 @@ public class MenuItemDAO {
     /** Insert a new menu item. Returns generated ID. */
     public int create(MenuItem item) throws SQLException {
         String sql = "INSERT INTO menu_items(category_id, name, description, price, emoji, image_url, available) "
+<<<<<<< HEAD
                 + "VALUES(?, ?, ?, ?, ?, ?, 1)";
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+=======
+                   + "VALUES(?, ?, ?, ?, ?, ?, 1)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
             ps.setInt(1, item.getCategoryId());
             ps.setString(2, item.getName());
             ps.setString(3, item.getDescription());
@@ -89,8 +123,12 @@ public class MenuItemDAO {
             ps.setString(6, item.getImageUrl());
             ps.executeUpdate();
             try (ResultSet gk = ps.getGeneratedKeys()) {
+<<<<<<< HEAD
                 if (gk.next())
                     return gk.getInt(1);
+=======
+                if (gk.next()) return gk.getInt(1);
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
             }
         }
         return -1;
@@ -101,10 +139,17 @@ public class MenuItemDAO {
     /** Update an existing item's details. */
     public boolean update(MenuItem item) throws SQLException {
         String sql = "UPDATE menu_items "
+<<<<<<< HEAD
                 + "SET category_id=?, name=?, description=?, price=?, emoji=?, image_url=?, available=? "
                 + "WHERE id=?";
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+                   + "SET category_id=?, name=?, description=?, price=?, emoji=?, image_url=?, available=? "
+                   + "WHERE id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
             ps.setInt(1, item.getCategoryId());
             ps.setString(2, item.getName());
             ps.setString(3, item.getDescription());
@@ -123,7 +168,11 @@ public class MenuItemDAO {
     public boolean delete(int id) throws SQLException {
         String sql = "DELETE FROM menu_items WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
+<<<<<<< HEAD
                 PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         }
@@ -140,6 +189,7 @@ public class MenuItemDAO {
         m.setDescription(rs.getString("description"));
         m.setPrice(rs.getBigDecimal("price"));
         m.setEmoji(rs.getString("emoji"));
+<<<<<<< HEAD
         m.setImageUrl(defaultImageUrl(rs.getString("image_url"), m.getCategoryId()));
         m.setAvailable(rs.getBoolean("available"));
         return m;
@@ -168,3 +218,11 @@ public class MenuItemDAO {
         };
     }
 }
+=======
+        m.setImageUrl(rs.getString("image_url"));
+        m.setAvailable(rs.getBoolean("available"));
+        return m;
+    }
+}
+
+>>>>>>> 0bcba734daa07b18d47da977425b97c629c0d7b5

@@ -5,7 +5,7 @@
 <%@ include file="/pages/errorpages/header.jsp" %>
 
 <div class="min-h-screen bg-paper flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
-  
+
   <div class="w-full max-w-5xl bg-white shadow-xl shadow-black/5 flex flex-col md:flex-row overflow-hidden" style="min-height: 80vh;">
     <!-- LEFT COLUMN: Review Your Order -->
     <div class="w-full md:w-[45%] bg-[#f4f5f5] p-10 md:p-14 flex flex-col">
@@ -71,7 +71,7 @@
       <p class="text-[14px] text-muted mb-8 max-w-md leading-relaxed">
         Please proceed to the billing counter or ask your server to settle your bill. We accept Cash, eSewa, Khalti, and major Credit Cards.
       </p>
-      
+
       <div class="flex gap-4 mb-auto">
         <div class="w-12 h-12 rounded bg-paper flex items-center justify-center text-xl border border-black/5" title="Cash">💵</div>
         <div class="w-12 h-12 rounded bg-paper flex items-center justify-center text-xl border border-black/5" title="eSewa">📱</div>
@@ -88,6 +88,15 @@
           </div>
         </div>
       </div>
+
+      <c:if test="${not empty order}">
+        <a href="${pageContext.request.contextPath}/customer/feedback?table=${table.tableNumber}"
+           class="mt-6 w-full max-w-md bg-forest text-white rounded-2xl px-6 py-4 text-sm font-semibold hover:bg-forest-md transition-all flex items-center justify-center gap-3 shadow-lg shadow-[#114b3e]/15 group">
+          <span class="text-xl group-hover:scale-110 transition-transform">💬</span>
+          <span>Share Your Experience</span>
+        </a>
+        <p class="text-[11px] text-muted mt-2 max-w-md text-center">Your feedback helps us serve you better</p>
+      </c:if>
     </div>
   </div>
 

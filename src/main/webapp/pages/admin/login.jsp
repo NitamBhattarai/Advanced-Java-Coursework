@@ -3,6 +3,12 @@
 <c:set var="pageTitle" value="Admin Login"/>
 <%@ include file="/pages/errorpages/header.jsp" %>
 
+<!-- ╔═════════════════════════════════════════╗
+║  VIEW: admin/login.jsp                  ║
+║  Controller: AuthController.java        ║
+║  POST → /admin/login → dashboard        ║
+╚═════════════════════════════════════════╝ -->
+
 <div class="min-h-screen grid grid-cols-2">
 
   <!-- LEFT: Forest green editorial panel -->
@@ -127,10 +133,10 @@
 </div>
 
 <script>
-function togglePwd(){
-  const f=document.getElementById('pwdField');
-  f.type = f.type==='password' ? 'text' : 'password';
-}
+  function togglePwd(){
+    const f=document.getElementById('pwdField');
+    f.type = f.type==='password' ? 'text' : 'password';
+  }
 </script>
 </body>
 </html>

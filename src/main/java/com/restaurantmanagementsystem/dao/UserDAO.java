@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.dao;
+package com.restaurantManagementSystem.dao;
 
 import com.restaurantManagementSystem.model.User;
 import com.restaurantManagementSystem.util.DBConnection;
@@ -19,7 +19,7 @@ public class UserDAO {
     /** Fetch user by username for login. */
     public User findByUsername(String username) throws SQLException {
         String sql = "SELECT id,full_name,email,username,password,role,active,created_at "
-                   + "FROM users WHERE username=? AND active=1";
+                + "FROM users WHERE username=? AND active=1";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, username);
@@ -117,6 +117,26 @@ public class UserDAO {
     /** Soft-delete: mark user inactive. */
     public boolean deactivate(int userId) throws SQLException {
         String sql = "UPDATE users SET active=0 WHERE id=?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Reactivate: mark user active. */
+    public boolean reactivate(int userId) throws SQLException {
+        String sql = "UPDATE users SET active=1 WHERE id=?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Delete a user account permanently from database. */
+    public boolean delete(int userId) throws SQLException {
+        String sql = "DELETE FROM users WHERE id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, userId);

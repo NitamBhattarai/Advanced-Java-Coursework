@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.utils;
+package com.restaurantManagementSystem.util;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
@@ -11,18 +11,18 @@ import java.util.regex.Pattern;
  */
 public class ValidationUtil {
 
-    // ── Regex patterns ─────────────────────────────────────────────────────────
+
     private static final Pattern EMAIL_PATTERN =
-        Pattern.compile("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
+            Pattern.compile("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
 
     private static final Pattern USERNAME_PATTERN =
-        Pattern.compile("^[a-zA-Z0-9_\\-]{3,60}$");
+            Pattern.compile("^[a-zA-Z0-9_\\-]{3,60}$");
 
     private static final Pattern PHONE_PATTERN =
-        Pattern.compile("^[0-9+\\-\\s]{7,20}$");
+            Pattern.compile("^[0-9+\\-\\s]{7,20}$");
 
     private static final Pattern TABLE_NUMBER_PATTERN =
-        Pattern.compile("^T[0-9]{2}$");   // T01 – T99
+            Pattern.compile("^T[0-9]{2}$");   // T01 – T99
 
     // ── String checks ──────────────────────────────────────────────────────────
 

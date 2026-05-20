@@ -1,5 +1,7 @@
+<<<<<<< Updated upstream
 <%@ page contentType="text/html;charset=UTF-8" import="com.restaurantManagementSystem.model.*" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="pageTitle" value="Users & Roles"/>
 <%@ include file="/pages/errorpages/header.jsp" %>
 <%@ include file="/pages/errorpages/admin-sidebar.jsp" %>
@@ -37,61 +39,93 @@
       </div>
       <table class="w-full text-[13px]">
         <thead>
-          <tr class="border-b border-black/10">
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Staff Member</th>
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Email</th>
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Role</th>
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Access Level</th>
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Status</th>
-            <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Actions</th>
-          </tr>
+        <tr class="border-b border-black/10">
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Staff Member</th>
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Email</th>
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Role</th>
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Access Level</th>
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Status</th>
+          <th class="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest font-semibold text-muted">Actions</th>
+        </tr>
         </thead>
         <tbody>
-          <c:forEach items="${users}" var="u">
-            <tr class="border-b border-black/5 hover:bg-paper transition-colors">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-full bg-forest/12 border border-forest/20 flex items-center justify-center
+        <c:forEach items="${users}" var="u">
+          <tr class="border-b border-black/5 hover:bg-paper transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-forest/12 border border-forest/20 flex items-center justify-center
                               text-[11px] font-semibold text-forest flex-shrink-0">
                     ${u.initials}
-                  </div>
-                  <span class="font-medium text-ink">${u.fullName}</span>
                 </div>
-              </td>
-              <td class="px-4 py-3 text-xs text-muted">${u.email}</td>
-              <td class="px-4 py-3">
+                <span class="font-medium text-ink">${u.fullName}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-xs text-muted">${u.email}</td>
+            <td class="px-4 py-3">
                 <span class="badge ${u.role.name() == 'ADMIN' ? 'badge-served' :
                                      u.role.name() == 'STAFF' ? 'badge-preparing' : 'badge-pending'}">
-                  ${u.role}
+                    ${u.role}
                 </span>
-              </td>
-              <td class="px-4 py-3 text-xs text-muted">
+            </td>
+            <td class="px-4 py-3 text-xs text-muted">
                 ${u.role.name() == 'ADMIN' ? 'Full Access' :
-                  u.role.name() == 'STAFF' ? 'Orders, Billing' : 'Kitchen Display'}
-              </td>
-              <td class="px-4 py-3">
+                        u.role.name() == 'STAFF' ? 'Orders, Billing' : 'Kitchen Display'}
+            </td>
+            <td class="px-4 py-3">
                 <span class="badge ${u.active ? 'badge-paid' : 'badge-cancelled'}">
-                  ${u.active ? 'Active' : 'Inactive'}
+                    ${u.active ? 'Active' : 'Inactive'}
                 </span>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex gap-2">
-                  <button class="text-xs border border-black/16 px-3 py-1.5 rounded hover:border-forest hover:text-forest transition-all">Edit</button>
-                  <c:if test="${u.id != currentUser.id}">
-                    <form method="POST" action="${pageContext.request.contextPath}/admin/users"
-                          onsubmit="return confirm('Deactivate ${u.fullName}?')" style="display:inline">
-                      <input type="hidden" name="action" value="deactivate">
-                      <input type="hidden" name="userId" value="${u.id}">
-                      <button type="submit"
-                              class="text-xs bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded hover:bg-red-600 hover:text-white transition-all">
-                        ${u.active ? 'Deactivate' : 'Deleted'}
-                      </button>
-                    </form>
-                  </c:if>
-                </div>
-              </td>
-            </tr>
-          </c:forEach>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex gap-2">
+                <button type="button"
+                        class="text-xs border border-black/16 px-3 py-1.5 rounded hover:border-forest hover:text-forest transition-all"
+                        data-user-id="${u.id}"
+                        data-full-name="${fn:escapeXml(u.fullName)}"
+                        data-username="${fn:escapeXml(u.username)}"
+                        data-email="${fn:escapeXml(u.email)}"
+                        data-role="${u.role}"
+                        data-active="${u.active ? '1' : '0'}"
+                        onclick="openEditUserModal(this)">Edit</button>
+                <c:if test="${u.id != currentUser.id}">
+                  <c:choose>
+                    <c:when test="${u.active}">
+                      <form method="POST" action="${pageContext.request.contextPath}/admin/users"
+                            onsubmit="return confirm('Deactivate ${u.fullName}?')" style="display:inline">
+                        <input type="hidden" name="action" value="deactivate">
+                        <input type="hidden" name="userId" value="${u.id}">
+                        <button type="submit"
+                                class="text-xs bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded hover:bg-red-600 hover:text-white transition-all">
+                          Deactivate
+                        </button>
+                      </form>
+                    </c:when>
+                    <c:otherwise>
+                      <form method="POST" action="${pageContext.request.contextPath}/admin/users"
+                            onsubmit="return confirm('Reactivate ${u.fullName}?')" style="display:inline">
+                        <input type="hidden" name="action" value="reactivate">
+                        <input type="hidden" name="userId" value="${u.id}">
+                        <button type="submit"
+                                class="text-xs bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded hover:bg-green-600 hover:text-white transition-all">
+                          Reactivate
+                        </button>
+                      </form>
+                      <form method="POST" action="${pageContext.request.contextPath}/admin/users"
+                            onsubmit="return confirm('Permanently delete ${u.fullName}? This cannot be undone.')" style="display:inline">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="userId" value="${u.id}">
+                        <button type="submit"
+                                class="text-xs bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded hover:bg-red-600 hover:text-white transition-all">
+                          Delete
+                        </button>
+                      </form>
+                    </c:otherwise>
+                  </c:choose>
+                </c:if>
+              </div>
+            </td>
+          </tr>
+        </c:forEach>
         </tbody>
       </table>
     </div>
@@ -146,7 +180,76 @@
     </form>
   </div>
 </div>
+
+<!-- EDIT USER MODAL -->
+<div id="editUserModal" class="hidden fixed inset-0 bg-ink/45 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-serif text-2xl font-normal">Edit Staff Member</h3>
+      <button type="button" onclick="closeEditUserModal()" class="text-muted hover:text-ink text-xl">✕</button>
+    </div>
+    <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+      <input type="hidden" name="action" value="update">
+      <input type="hidden" name="userId" id="editUserId">
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Full Name</label>
+        <input id="editFullName" name="fullName" type="text" placeholder="e.g. Hari Prasad Sharma" required
+               class="gk-field w-full px-3 py-2 bg-white border border-black/10 rounded text-sm text-ink placeholder-muted2 outline-none">
+      </div>
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Username</label>
+        <input id="editUsername" type="text" disabled
+               class="w-full px-3 py-2 bg-black/5 border border-black/10 rounded text-sm text-ink outline-none cursor-not-allowed">
+      </div>
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Email</label>
+        <input id="editEmail" name="email" type="email" placeholder="hari@gokyo.com" required
+               class="gk-field w-full px-3 py-2 bg-white border border-black/10 rounded text-sm text-ink placeholder-muted2 outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Role</label>
+          <select id="editRole" name="role" class="gk-field w-full px-3 py-2 bg-white border border-black/10 rounded text-sm text-ink outline-none">
+            <option value="STAFF">Staff</option>
+            <option value="KITCHEN">Kitchen</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <label class="inline-flex items-center gap-2 text-sm text-ink">
+            <input id="editActive" name="active" type="checkbox" class="rounded border-black/10 text-forest focus:ring-forest">
+            Active
+          </label>
+        </div>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" onclick="closeEditUserModal()"
+                class="text-sm border border-black/16 px-5 py-2 rounded hover:border-forest hover:text-forest transition-all">Cancel</button>
+        <button type="submit"
+                class="text-sm bg-forest text-white px-5 py-2 rounded hover:bg-forest-md transition-colors">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditUserModal(button) {
+    document.getElementById('editUserId').value = button.dataset.userId;
+    document.getElementById('editFullName').value = button.dataset.fullName;
+    document.getElementById('editUsername').value = button.dataset.username;
+    document.getElementById('editEmail').value = button.dataset.email;
+    document.getElementById('editRole').value = button.dataset.role;
+    document.getElementById('editActive').checked = button.dataset.active === '1';
+    document.getElementById('editUserModal').classList.remove('hidden');
+  }
+
+  function closeEditUserModal() {
+    document.getElementById('editUserModal').classList.add('hidden');
+  }
+</script>
 </body>
 </html>
 
+=======
+>>>>>>> Stashed changes
 

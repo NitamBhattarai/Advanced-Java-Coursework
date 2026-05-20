@@ -1,14 +1,12 @@
-package com.restaurantmanagementsystem.controller;
+package com.restaurantManagementSystem.controller;
 
 import com.restaurantManagementSystem.dao.*;
 import com.restaurantManagementSystem.model.*;
 import com.restaurantManagementSystem.model.Reservation;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Part;
+import com.restaurantManagementSystem.util.ValidationUtil;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -16,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -100,20 +99,38 @@ public class AdminServlet extends HttpServlet {
                     List<Order> unpaidOrders = orderDAO.findUnpaidOrders();
                     java.util.Map<Integer, Integer> billMap = new java.util.HashMap<>();
                     com.restaurantManagementSystem.dao.BillDAO bDao = new com.restaurantManagementSystem.dao.BillDAO();
+                    String selectedBillingTable = req.getParameter("table");
+                    Integer selectedBillingOrderId = null;
                     for (Order o : unpaidOrders) {
                         o.setItems(orderDAO.findOrderItems(o.getId()));
-                        com.restaurantManagementSystem.model.Bill b = bDao.findByOrderId(o.getId());
-                        if (b != null)
+                        com.restaurantManagementSystem.model.Bill b = bDao.createForOrderIfMissing(o.getId());
+                        if (b != null) {
                             billMap.put(o.getId(), b.getId());
+                        }
+                        if (selectedBillingTable != null && selectedBillingOrderId == null
+                                && selectedBillingTable.equals(String.valueOf(o.getTableNumber()))) {
+                            selectedBillingOrderId = o.getId();
+                        }
                     }
                     req.setAttribute("orders", unpaidOrders);
                     req.setAttribute("billMap", billMap);
+                    if (selectedBillingTable != null && !selectedBillingTable.isBlank()) {
+                        req.setAttribute("selectedBillingTable", selectedBillingTable);
+                    }
+                    if (selectedBillingOrderId != null) {
+                        req.setAttribute("selectedBillingOrderId", selectedBillingOrderId);
+                    }
                     forward(req, resp, "/pages/admin/billing.jsp");
                     break;
 
                 case "/admin/reports":
                     req.setAttribute("todayRevenue", orderDAO.getTodayRevenue());
+                    req.setAttribute("todayPaidRevenue", orderDAO.getTodayPaidRevenue());
                     req.setAttribute("todayOrders", orderDAO.getTodayOrderCount());
+                    req.setAttribute("avgTicket", orderDAO.getAverageTicket());
+                    req.setAttribute("transactionCount", orderDAO.getTodayTransactionCount());
+                    req.setAttribute("topItem", orderDAO.getTopSellingItem());
+                    req.setAttribute("recentTransactions", orderDAO.getRecentTransactions(5));
                     req.setAttribute("paymentMethods", paymentDAO.getMethodCounts());
                     forward(req, resp, "/pages/admin/reports.jsp");
                     break;
@@ -199,16 +216,21 @@ public class AdminServlet extends HttpServlet {
             case "create": {
                 // Validate: name and price must not be blank
                 String name = req.getParameter("name");
-                String price = req.getParameter("price");
-                if (name == null || name.isBlank() || price == null || price.isBlank()) {
+                String priceInput = req.getParameter("price");
+                if (name == null || name.isBlank() || priceInput == null || priceInput.isBlank()) {
                     setFlash(req, "error", "Name and price are required.");
+                    break;
+                }
+                BigDecimal price = parseMenuPrice(priceInput);
+                if (price == null) {
+                    setFlash(req, "error", "Price must be a positive number.");
                     break;
                 }
                 MenuItem item = new MenuItem();
                 item.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
                 item.setName(name.trim());
                 item.setDescription(req.getParameter("description"));
-                item.setPrice(new BigDecimal(price));
+                item.setPrice(price);
                 item.setEmoji(req.getParameter("emoji"));
                 item.setImageUrl(saveUploadedMenuImage(req));
                 menuDAO.create(item);
@@ -218,9 +240,14 @@ public class AdminServlet extends HttpServlet {
 
             case "update": {
                 String name = req.getParameter("name");
-                String price = req.getParameter("price");
-                if (name == null || name.isBlank() || price == null || price.isBlank()) {
+                String priceInput = req.getParameter("price");
+                if (name == null || name.isBlank() || priceInput == null || priceInput.isBlank()) {
                     setFlash(req, "error", "Name and price are required.");
+                    break;
+                }
+                BigDecimal price = parseMenuPrice(priceInput);
+                if (price == null) {
+                    setFlash(req, "error", "Price must be a positive number.");
                     break;
                 }
                 int id = Integer.parseInt(req.getParameter("id"));
@@ -229,7 +256,7 @@ public class AdminServlet extends HttpServlet {
                     item.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
                     item.setName(name.trim());
                     item.setDescription(req.getParameter("description"));
-                    item.setPrice(new BigDecimal(price));
+                    item.setPrice(price);
                     item.setAvailable("1".equals(req.getParameter("available")));
                     item.setEmoji(req.getParameter("emoji"));
                     String imageUrl = saveUploadedMenuImage(req);
@@ -242,14 +269,47 @@ public class AdminServlet extends HttpServlet {
                 break;
             }
 
+            case "toggle": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                MenuItem item = menuDAO.findById(id);
+                if (item != null) {
+                    item.setAvailable("1".equals(req.getParameter("available")));
+                    menuDAO.update(item);
+                    setFlash(req, "success",
+                            item.isAvailable() ? "Menu item is now active." : "Menu item is now inactive.");
+                } else {
+                    setFlash(req, "error", "Menu item was not found.");
+                }
+                break;
+            }
+
             case "delete": {
                 int id = Integer.parseInt(req.getParameter("id"));
-                menuDAO.delete(id);
-                setFlash(req, "success", "Item removed from menu.");
+                if (orderDAO.hasOrderItemsForMenuItem(id)) {
+                    setFlash(req, "error",
+                            "This item is referenced by existing orders and cannot be deleted. Mark it inactive instead.");
+                } else {
+                    try {
+                        if (menuDAO.delete(id)) {
+                            setFlash(req, "success", "Item removed from menu.");
+                        } else {
+                            setFlash(req, "error", "Menu item was not found.");
+                        }
+                    } catch (SQLIntegrityConstraintViolationException e) {
+                        setFlash(req, "error", "This item has order history and cannot be permanently removed.");
+                    }
+                }
                 break;
             }
         }
         resp.sendRedirect(req.getContextPath() + "/admin/menu");
+    }
+
+    private BigDecimal parseMenuPrice(String priceInput) {
+        if (!ValidationUtil.isPositiveDecimal(priceInput)) {
+            return null;
+        }
+        return new BigDecimal(priceInput.trim());
     }
 
     private String saveUploadedMenuImage(HttpServletRequest req) throws IOException, ServletException {
@@ -273,9 +333,15 @@ public class AdminServlet extends HttpServlet {
             throw new ServletException("Only JPG, PNG, GIF, and WEBP images are allowed.");
         }
 
-        String uploadRoot = req.getServletContext().getRealPath("/uploads/menu");
-        if (uploadRoot == null) {
-            throw new ServletException("Upload directory is not available for this deployment.");
+        // Use a stable upload directory that survives WAR redeployment.
+        // Priority: 1) context init-param "uploadDir"  2) system property "restaurant.uploadDir"
+        //           3) <user.home>/restaurant-uploads/menu
+        String uploadRoot = req.getServletContext().getInitParameter("uploadDir");
+        if (uploadRoot == null || uploadRoot.isBlank()) {
+            uploadRoot = System.getProperty("restaurant.uploadDir");
+        }
+        if (uploadRoot == null || uploadRoot.isBlank()) {
+            uploadRoot = System.getProperty("user.home") + "/restaurant-uploads/menu";
         }
 
         Files.createDirectories(Paths.get(uploadRoot));
@@ -284,7 +350,7 @@ public class AdminServlet extends HttpServlet {
         try (InputStream input = imagePart.getInputStream()) {
             Files.copy(input, destination, StandardCopyOption.REPLACE_EXISTING);
         }
-        return "/uploads/menu/" + fileName;
+        return "/menu-image?file=" + fileName;
     }
 
     // ── Order status update ───────────────────────────────
@@ -407,18 +473,34 @@ public class AdminServlet extends HttpServlet {
 
     private void handleFeedbackPost(HttpServletRequest req, HttpServletResponse resp, String action)
             throws Exception {
-        if ("create".equals(action)) {
-            Feedback feedback = new Feedback();
-            feedback.setGuestName(required(req, "guestName", "Guest name is required."));
-            feedback.setGuestEmail(req.getParameter("guestEmail"));
-            feedback.setTableNumber(req.getParameter("tableNumber"));
-            feedback.setCuisineRating(rating(req, "cuisineRating"));
-            feedback.setServiceRating(rating(req, "serviceRating"));
-            feedback.setAmbienceRating(rating(req, "ambienceRating"));
-            feedback.setOverallRating(rating(req, "overallRating"));
-            feedback.setComments(required(req, "comments", "Feedback comments are required."));
-            feedbackDAO.create(feedback);
-            setFlash(req, "success", "Feedback added for " + feedback.getGuestName() + ".");
+        switch (action == null ? "" : action) {
+            case "create": {
+                Feedback feedback = new Feedback();
+                feedback.setGuestName(required(req, "guestName", "Guest name is required."));
+                feedback.setGuestEmail(req.getParameter("guestEmail"));
+                feedback.setTableNumber(req.getParameter("tableNumber"));
+                feedback.setCuisineRating(rating(req, "cuisineRating"));
+                feedback.setServiceRating(rating(req, "serviceRating"));
+                feedback.setAmbienceRating(rating(req, "ambienceRating"));
+                feedback.setOverallRating(rating(req, "overallRating"));
+                feedback.setComments(required(req, "comments", "Feedback comments are required."));
+                feedbackDAO.create(feedback);
+                setFlash(req, "success", "Feedback added for " + feedback.getGuestName() + ".");
+                break;
+            }
+            case "flag": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                feedbackDAO.toggleFlag(id);
+                setFlash(req, "success", "Feedback flag status updated.");
+                break;
+            }
+            case "note": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                String note = req.getParameter("internalNote");
+                feedbackDAO.updateInternalNote(id, note != null ? note.trim() : null);
+                setFlash(req, "success", "Internal note saved.");
+                break;
+            }
         }
         resp.sendRedirect(req.getContextPath() + "/admin/feedback");
     }

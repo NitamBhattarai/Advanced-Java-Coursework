@@ -1,7 +1,6 @@
-package com.restaurantmanagementsystem.filter;
+package com.restaurantManagementSystem.filter;
 
 import jakarta.servlet.*;
-
 import java.io.IOException;
 
 /**

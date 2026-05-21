@@ -1,18 +1,18 @@
-package com.restaurantmanagementsystem.controller;
+package com.restaurantManagementSystem.controller;
 
-import com.restaurantmanagementsystem.dao.BillDAO;
-import com.restaurantmanagementsystem.dao.FeedbackDAO;
-import com.restaurantmanagementsystem.dao.MenuItemDAO;
-import com.restaurantmanagementsystem.dao.OrderDAO;
-import com.restaurantmanagementsystem.dao.ReservationDAO;
-import com.restaurantmanagementsystem.dao.TableDAO;
-import com.restaurantmanagementsystem.model.Bill;
-import com.restaurantmanagementsystem.model.DiningTable;
-import com.restaurantmanagementsystem.model.Feedback;
-import com.restaurantmanagementsystem.model.Order;
-import com.restaurantmanagementsystem.model.OrderItem;
-import com.restaurantmanagementsystem.model.Reservation;
-import com.restaurantmanagementsystem.model.User;
+import com.restaurantManagementSystem.dao.BillDAO;
+import com.restaurantManagementSystem.dao.FeedbackDAO;
+import com.restaurantManagementSystem.dao.MenuItemDAO;
+import com.restaurantManagementSystem.dao.OrderDAO;
+import com.restaurantManagementSystem.dao.ReservationDAO;
+import com.restaurantManagementSystem.dao.TableDAO;
+import com.restaurantManagementSystem.model.Bill;
+import com.restaurantManagementSystem.model.DiningTable;
+import com.restaurantManagementSystem.model.Feedback;
+import com.restaurantManagementSystem.model.Order;
+import com.restaurantManagementSystem.model.OrderItem;
+import com.restaurantManagementSystem.model.Reservation;
+import com.restaurantManagementSystem.model.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -129,11 +129,7 @@ public class CustomerServlet extends HttpServlet {
             }
         } catch (
 
-<<<<<<< HEAD
-        NumberFormatException e) {
-=======
                 NumberFormatException e) {
->>>>>>> 0c9a0c1df3435d31bca051b8ede9d46cd7b11042
             req.setAttribute("error", "Invalid parameter.");
             forward(req, resp, "/pages/customer/scan.jsp");
         } catch (Exception e) {

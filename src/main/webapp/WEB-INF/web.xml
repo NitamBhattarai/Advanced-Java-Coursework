@@ -1,6 +1,159 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-         version="6.0">
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+
+    <display-name>Gokyo Bistro - Restaurant QR Ordering System</display-name>
+    <description>CS5054NT Advanced Programming Technologies Coursework</description>
+
+    <!-- Upload directory for menu images. Survives WAR redeployment. -->
+    <!-- Override this to point to a custom path, e.g. /var/restaurant/uploads/menu. -->
+    <!-- Defaults to ${user.home}/restaurant-uploads/menu when not set. -->
+    <!--
+    <context-param>
+        <param-name>uploadDir</param-name>
+        <param-value>/var/restaurant/uploads/menu</param-value>
+    </context-param>
+    -->
+
+    <!-- Welcome page -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- Session timeout: 8 hours -->
+    <session-config>
+        <session-timeout>480</session-timeout>
+    </session-config>
+
+    <!-- Error pages -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/pages/errorpages/error404.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/pages/errorpages/error500.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>403</error-code>
+        <location>/pages/errorpages/error403.jsp</location>
+    </error-page>
+
+    <!-- Character encoding filter -->
+    <filter>
+        <filter-name>CharsetFilter</filter-name>
+        <filter-class>com.restaurantManagementSystem.filter.CharsetFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CharsetFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Servlet mappings -->
+    <servlet>
+        <servlet-name>AuthController</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.AuthServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuthController</servlet-name>
+        <url-pattern>/admin/login</url-pattern>
+        <url-pattern>/admin/logout</url-pattern>
+        <url-pattern>/kitchen/login</url-pattern>
+        <url-pattern>/kitchen/logout</url-pattern>
+    </servlet-mapping>
+
+    <!-- Image servlet: serves uploaded menu item photos -->
+    <servlet>
+        <servlet-name>ImageServlet</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.ImageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ImageServlet</servlet-name>
+        <url-pattern>/menu-image</url-pattern>
+    </servlet-mapping>
+
+    <!-- QR servlet: renders scannable table menu QR codes -->
+    <servlet>
+        <servlet-name>TableQrServlet</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.TableQrServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TableQrServlet</servlet-name>
+        <url-pattern>/table-qr</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminController</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.AdminServlet</servlet-class>
+        <multipart-config>
+            <max-file-size>5242880</max-file-size>
+            <max-request-size>6291456</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminController</servlet-name>
+        <url-pattern>/admin/dashboard</url-pattern>
+        <url-pattern>/admin/orders</url-pattern>
+        <url-pattern>/admin/menu</url-pattern>
+        <url-pattern>/admin/tables</url-pattern>
+        <url-pattern>/admin/billing</url-pattern>
+        <url-pattern>/admin/reports</url-pattern>
+        <url-pattern>/admin/payments</url-pattern>
+        <url-pattern>/admin/users</url-pattern>
+        <url-pattern>/admin/settings</url-pattern>
+        <url-pattern>/admin/reservations</url-pattern>
+        <url-pattern>/admin/feedback</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>HomeServlet</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.HomeServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>HomeServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+        <url-pattern>/home</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>KitchenController</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.KitchenServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>KitchenController</servlet-name>
+        <url-pattern>/kitchen/display</url-pattern>
+        <url-pattern>/kitchen/update</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>CustomerController</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.CustomerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CustomerController</servlet-name>
+        <url-pattern>/customer/scan</url-pattern>
+        <url-pattern>/customer/menu</url-pattern>
+        <url-pattern>/customer/order</url-pattern>
+        <url-pattern>/customer/bill</url-pattern>
+        <url-pattern>/customer/reservation</url-pattern>
+        <url-pattern>/customer/feedback</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PaymentController</servlet-name>
+        <servlet-class>com.restaurantManagementSystem.controller.PaymentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PaymentController</servlet-name>
+        <url-pattern>/admin/payment/process</url-pattern>
+    </servlet-mapping>
+
 </web-app>

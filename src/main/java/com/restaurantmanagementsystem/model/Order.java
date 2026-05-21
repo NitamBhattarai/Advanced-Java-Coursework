@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.model;
+package com.restaurantManagementSystem.model;
 
 import java.time.LocalDateTime;
 import java.util.List;

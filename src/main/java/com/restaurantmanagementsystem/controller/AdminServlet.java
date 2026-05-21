@@ -19,26 +19,26 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-///**
-// * AdminController — handles all admin dashboard pages.
-// *
-// * Routes (all protected by AuthFilter):
-// * GET /admin/dashboard → overview with stats
-// * GET /admin/orders → full order list
-// * POST /admin/orders → update order status
-// * GET /admin/menu → menu items list
-// * POST /admin/menu → create/update/delete menu item
-// * GET /admin/tables → table map
-// * GET /admin/billing → billing page
-// * GET /admin/reports → revenue reports
-// * GET /admin/payments → payment records
-// * GET /admin/users → staff management
-// * POST /admin/users → create/deactivate user
-// * GET /admin/settings → system settings
-// * GET /admin/reservations → reservations list
-// *
-// * MVC Role: Controller
-// */
+/**
+ * AdminController — handles all admin dashboard pages.
+ *
+ * Routes (all protected by AuthFilter):
+ * GET /admin/dashboard → overview with stats
+ * GET /admin/orders → full order list
+ * POST /admin/orders → update order status
+ * GET /admin/menu → menu items list
+ * POST /admin/menu → create/update/delete menu item
+ * GET /admin/tables → table map
+ * GET /admin/billing → billing page
+ * GET /admin/reports → revenue reports
+ * GET /admin/payments → payment records
+ * GET /admin/users → staff management
+ * POST /admin/users → create/deactivate user
+ * GET /admin/settings → system settings
+ * GET /admin/reservations → reservations list
+ *
+ * MVC Role: Controller
+ */
 @jakarta.servlet.annotation.MultipartConfig(maxFileSize = 5242880, maxRequestSize = 10485760)
 public class AdminServlet extends HttpServlet {
 

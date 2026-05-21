@@ -1,7 +1,7 @@
-package com.restaurantManagementSystem.dao;
+package com.restaurantmanagementsystem.dao;
 
-import com.restaurantManagementSystem.model.DiningTable;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.model.DiningTable;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
 import java.sql.*;
 import java.util.*;
@@ -98,6 +98,28 @@ public class TableDAO {
             }
         }
         return -1;
+    }
+
+    /** Check if a table number already exists (case‑insensitive). */
+    public boolean existsTableNumber(String tableNumber) throws SQLException {
+        String sql = "SELECT 1 FROM dining_tables WHERE LOWER(table_number) = LOWER(?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    /** Delete a table. Returns true if a row was removed. */
+    public boolean delete(int id) throws SQLException {
+        String sql = "DELETE FROM dining_tables WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     // ── MAPPER ────────────────────────────────────────────

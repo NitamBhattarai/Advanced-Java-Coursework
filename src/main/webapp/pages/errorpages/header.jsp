@@ -1,4 +1,4 @@
-<%-- views/shared/header.jsp — included in every page --%> <%@ taglib prefix="c"
+%-- views/shared/header.jsp — included in every page --%> <%@ taglib prefix="c"
 uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="en">

@@ -1,8 +1,8 @@
-package com.restaurantManagementSystem.dao;
+package com.restaurantmanagementsystem.dao;
 
-import com.restaurantManagementSystem.model.User;
-import com.restaurantManagementSystem.util.DBConnection;
-import com.restaurantManagementSystem.util.PasswordUtil;
+import com.restaurantmanagementsystem.model.User;
+import com.restaurantmanagementsystem.utils.DBConnection;
+import com.restaurantmanagementsystem.utils.PasswordUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -124,7 +124,27 @@ public class UserDAO {
         }
     }
 
-    // ── VALIDATION ────────────────────────────────────────────────────────
+    // ── REACTIVATE & DELETE ────────────────────────────────────────────────────────
+    /** Reactivate a previously deactivated user. */
+    public boolean reactivate(int userId) throws SQLException {
+        String sql = "UPDATE users SET active=1 WHERE id=?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Hard delete a user record. Returns true if deletion succeeded. */
+    public boolean delete(int userId) throws SQLException {
+        String sql = "DELETE FROM users WHERE id=?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
 
     public boolean usernameExists(String username) throws SQLException {
         String sql = "SELECT 1 FROM users WHERE username=?";

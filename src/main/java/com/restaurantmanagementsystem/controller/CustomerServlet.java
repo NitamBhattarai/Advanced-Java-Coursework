@@ -127,13 +127,7 @@ public class CustomerServlet extends HttpServlet {
                 default:
                     resp.sendRedirect(req.getContextPath() + "/customer/scan");
             }
-        } catch (
-
-<<<<<<< HEAD
-        NumberFormatException e) {
-=======
-                NumberFormatException e) {
->>>>>>> 0c9a0c1df3435d31bca051b8ede9d46cd7b11042
+        } catch (NumberFormatException e) {
             req.setAttribute("error", "Invalid parameter.");
             forward(req, resp, "/pages/customer/scan.jsp");
         } catch (Exception e) {

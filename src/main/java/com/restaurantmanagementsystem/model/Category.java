@@ -1,4 +1,4 @@
-package com.restaurantManagementSystem.model;
+package com.restaurantmanagementsystem.model;
 
 /**
  * Category — represents a menu category (Starters, Mains, etc.)

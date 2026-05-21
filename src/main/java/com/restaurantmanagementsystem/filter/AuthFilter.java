@@ -1,6 +1,6 @@
-package com.restaurantManagementSystem.filter;
+package com.restaurantmanagementsystem.filter;
 
-import com.restaurantManagementSystem.model.User;
+import com.restaurantmanagementsystem.model.User;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;

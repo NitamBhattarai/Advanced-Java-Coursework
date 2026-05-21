@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" import="com.restaurantManagementSystem.model.*,java.util.*" %>
+%@ page contentType="text/html;charset=UTF-8" import="com.restaurantmanagementsystem.model.*,java.util.*" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>

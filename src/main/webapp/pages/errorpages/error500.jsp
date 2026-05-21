@@ -1,4 +1,4 @@
-<%-- error500.jsp --%>
+%-- error500.jsp --%>
 <%@ page contentType="text/html;charset=UTF-8" isErrorPage="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Server Error"/>

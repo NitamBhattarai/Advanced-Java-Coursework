@@ -1,4 +1,4 @@
-package com.restaurantManagementSystem.util;
+package com.restaurantmanagementsystem.utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

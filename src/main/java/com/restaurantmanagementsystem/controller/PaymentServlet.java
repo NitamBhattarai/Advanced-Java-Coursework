@@ -1,14 +1,14 @@
-package com.restaurantManagementSystem.controller;
+package com.restaurantmanagementsystem.controller;
 
-import com.restaurantManagementSystem.dao.BillDAO;
-import com.restaurantManagementSystem.dao.OrderDAO;
-import com.restaurantManagementSystem.dao.PaymentDAO;
-import com.restaurantManagementSystem.dao.TableDAO;
-import com.restaurantManagementSystem.model.Bill;
-import com.restaurantManagementSystem.model.DiningTable;
-import com.restaurantManagementSystem.model.Order;
-import com.restaurantManagementSystem.model.Payment;
-import com.restaurantManagementSystem.model.User;
+import com.restaurantmanagementsystem.dao.BillDAO;
+import com.restaurantmanagementsystem.dao.OrderDAO;
+import com.restaurantmanagementsystem.dao.PaymentDAO;
+import com.restaurantmanagementsystem.dao.TableDAO;
+import com.restaurantmanagementsystem.model.Bill;
+import com.restaurantmanagementsystem.model.DiningTable;
+import com.restaurantmanagementsystem.model.Order;
+import com.restaurantmanagementsystem.model.Payment;
+import com.restaurantmanagementsystem.model.User;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;

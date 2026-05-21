@@ -1,7 +1,7 @@
 package com.restaurantmanagementsystem.dao;
 
 import com.restaurantmanagementsystem.model.Category;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
 import java.sql.*;
 import java.util.*;

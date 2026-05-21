@@ -1,4 +1,4 @@
-package com.restaurantManagementSystem.controller;
+package com.restaurantmanagementsystem.controller;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -6,8 +6,8 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import com.restaurantManagementSystem.dao.TableDAO;
-import com.restaurantManagementSystem.model.DiningTable;
+import com.restaurantmanagementsystem.dao.TableDAO;
+import com.restaurantmanagementsystem.model.DiningTable;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,7 +1,7 @@
-package com.restaurantManagementSystem.controller;
+package com.restaurantmanagementsystem.controller;
 
-import com.restaurantManagementSystem.dao.OrderDAO;
-import com.restaurantManagementSystem.model.Order;
+import com.restaurantmanagementsystem.dao.OrderDAO;
+import com.restaurantmanagementsystem.model.Order;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;

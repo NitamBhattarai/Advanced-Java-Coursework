@@ -1,6 +1,6 @@
-package com.restaurantManagementSystem.util;
+package com.restaurantmanagementsystem.utils;
 
-import com.restaurantManagementSystem.model.User;
+import com.restaurantmanagementsystem.model.User;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

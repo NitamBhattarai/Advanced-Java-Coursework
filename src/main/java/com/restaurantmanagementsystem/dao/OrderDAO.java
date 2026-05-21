@@ -1,7 +1,7 @@
-package com.restaurantManagementSystem.dao;
+package com.restaurantmanagementsystem.dao;
 
-import com.restaurantManagementSystem.model.*;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.model.*;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

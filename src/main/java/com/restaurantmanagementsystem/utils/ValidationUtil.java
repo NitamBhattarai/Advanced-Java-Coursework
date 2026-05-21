@@ -1,4 +1,4 @@
-package com.restaurantManagementSystem.util;
+package com.restaurantmanagementsystem.utils;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;

@@ -1,7 +1,7 @@
-package com.restaurantManagementSystem.dao;
+package com.restaurantmanagementsystem.dao;
 
-import com.restaurantManagementSystem.model.Reservation;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.model.Reservation;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
 import java.sql.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
   String cp = request.getContextPath();
   String path = request.getServletPath();

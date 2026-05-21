@@ -1,5 +1,5 @@
-<%-- ═══════════════════════════════════════════ TABLES JSP ═══ --%>
-<%@ page contentType="text/html;charset=UTF-8" import="com.restaurantManagementSystem.model.*" %>
+%-- ═══════════════════════════════════════════ TABLES JSP ═══ --%>
+<%@ page contentType="text/html;charset=UTF-8" import="com.restaurantmanagementsystem.model.*" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Tables"/>
 <%@ include file="/pages/errorpages/header.jsp" %>

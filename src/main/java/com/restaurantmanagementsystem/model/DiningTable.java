@@ -1,4 +1,4 @@
-package com.restaurantManagementSystem.model;
+package com.restaurantmanagementsystem.model;
 
 /**
  * DiningTable — represents a physical restaurant table.

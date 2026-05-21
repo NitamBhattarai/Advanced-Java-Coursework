@@ -1,7 +1,7 @@
 package com.restaurantmanagementsystem.dao;
+import com.restaurantmanagementsystem.model.Feedback;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
-import com.restaurantManagementSystem.model.Feedback;
-import com.restaurantManagementSystem.util.DBConnection;
 
 import java.sql.*;
 import java.util.ArrayList;

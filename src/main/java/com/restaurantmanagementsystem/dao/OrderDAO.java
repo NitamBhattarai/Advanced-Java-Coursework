@@ -1,4 +1,4 @@
-package com.restaurantmanagementsystem.dao;
+package com.restaurantManagementSystem.dao;
 
 import com.restaurantmanagementsystem.model.*;
 import com.restaurantmanagementsystem.utils.DBConnection;
@@ -16,15 +16,9 @@ import java.util.*;
  */
 public class OrderDAO {
 
-    // ── CREATE ────────────────────────────────────────────
 
-    /**
-     * Create a new order with its items inside a single transaction.
-     * Also marks the table as OCCUPIED and auto-generates the bill.
-     *
-     * @param order Order object with tableId and items populated
-     * @return generated order ID, or -1 on failure
-     */
+public class OrderDAO {
+
     public int createOrder(Order order) throws SQLException {
         Connection conn = null;
         try {
@@ -123,7 +117,7 @@ public class OrderDAO {
         String sql = BASE_SQL + " WHERE o.table_id=? AND o.status NOT IN ('SERVED','CANCELLED') "
                 + "ORDER BY o.ordered_at DESC";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, tableId);
             return mapResultSet(ps.executeQuery());
         }
@@ -141,7 +135,7 @@ public class OrderDAO {
     public Order findById(int orderId) throws SQLException {
         String sql = BASE_SQL + " WHERE o.id=?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             List<Order> results = mapResultSet(ps.executeQuery());
             return results.isEmpty() ? null : results.get(0);
@@ -153,7 +147,7 @@ public class OrderDAO {
         String sql = BASE_SQL + " WHERE o.id=?";
         Order order = null;
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             List<Order> results = mapResultSet(ps.executeQuery());
             if (!results.isEmpty())
@@ -171,7 +165,7 @@ public class OrderDAO {
                 + "FROM order_items oi LEFT JOIN menu_items m ON oi.menu_item_id = m.id "
                 + "WHERE oi.order_id = ?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -209,7 +203,7 @@ public class OrderDAO {
     public boolean updateStatus(int orderId, Order.Status status) throws SQLException {
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             ps.setInt(2, orderId);
             return ps.executeUpdate() > 0;
@@ -224,8 +218,8 @@ public class OrderDAO {
                 + "JOIN orders o ON b.order_id = o.id "
                 + "WHERE DATE(o.ordered_at) = CURDATE() AND o.status = 'SERVED'";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             return rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO;
         }
     }
@@ -235,8 +229,8 @@ public class OrderDAO {
         String sql = "SELECT COUNT(*) FROM orders "
                 + "WHERE DATE(ordered_at) = CURDATE() AND status != 'CANCELLED'";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             return rs.next() ? rs.getInt(1) : 0;
         }
     }
@@ -245,8 +239,8 @@ public class OrderDAO {
     public int getPendingCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM orders WHERE status = 'PENDING'";
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             return rs.next() ? rs.getInt(1) : 0;
         }
     }
@@ -346,8 +340,8 @@ public class OrderDAO {
 
     private List<Order> executeQuery(String sql) throws SQLException {
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             return mapResultSet(rs);
         }
     }
@@ -380,7 +374,7 @@ public class OrderDAO {
         String dateStr = LocalDate.now().toString().replace("-", "");
         String sql = "SELECT COUNT(*) + 1 FROM orders WHERE DATE(ordered_at) = CURDATE()";
         try (PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {
             int seq = rs.next() ? rs.getInt(1) : 1;
             return String.format("ORD-%s-%03d", dateStr, seq);
         }

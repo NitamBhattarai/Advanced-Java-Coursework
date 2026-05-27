@@ -1,13 +1,20 @@
 package com.restaurantManagementSystem.dao;
 
-import com.restaurantManagementSystem.model.*;
-import com.restaurantManagementSystem.util.DBConnection;
+import com.restaurantmanagementsystem.model.*;
+import com.restaurantmanagementsystem.utils.DBConnection;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
+
+/**
+ * OrderDAO — all database operations for orders and order items.
+ * Handles transactional order creation (order + items + bill in one tx).
+ * MVC Role: Model (Data Access Layer)
+ */
+public class OrderDAO {
 
 
 public class OrderDAO {
@@ -154,8 +161,8 @@ public class OrderDAO {
     /** Load items for a given order ID. Used by KitchenController. */
     public List<OrderItem> findOrderItems(int orderId) throws SQLException {
         List<OrderItem> items = new ArrayList<>();
-        String sql = "SELECT oi.*, m.name AS item_name, m.emoji "
-                + "FROM order_items oi JOIN menu_items m ON oi.menu_item_id = m.id "
+        String sql = "SELECT oi.*, COALESCE(m.name, CONCAT('Item #', oi.menu_item_id)) AS item_name, m.emoji "
+                + "FROM order_items oi LEFT JOIN menu_items m ON oi.menu_item_id = m.id "
                 + "WHERE oi.order_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -176,6 +183,18 @@ public class OrderDAO {
             }
         }
         return items;
+    }
+
+    /** Returns true if any order items reference the given menu item. */
+    public boolean hasOrderItemsForMenuItem(int menuItemId) throws SQLException {
+        String sql = "SELECT 1 FROM order_items WHERE menu_item_id = ? LIMIT 1";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, menuItemId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     // ── UPDATE ────────────────────────────────────────────
@@ -224,6 +243,92 @@ public class OrderDAO {
              ResultSet rs = ps.executeQuery()) {
             return rs.next() ? rs.getInt(1) : 0;
         }
+    }
+
+    /** Today's total revenue from PAID bills (via payments). */
+    public BigDecimal getTodayPaidRevenue() throws SQLException {
+        String sql = "SELECT COALESCE(SUM(p.amount_paid), 0) FROM payments p "
+                + "JOIN bills b ON p.bill_id = b.id "
+                + "JOIN orders o ON b.order_id = o.id "
+                + "WHERE DATE(p.paid_at) = CURDATE() AND p.status = 'PAID'";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO;
+        }
+    }
+
+    /** Average ticket size today (avg bill total for paid orders today). */
+    public BigDecimal getAverageTicket() throws SQLException {
+        String sql = "SELECT COALESCE(AVG(p.amount_paid), 0) FROM payments p "
+                + "WHERE DATE(p.paid_at) = CURDATE() AND p.status = 'PAID'";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO;
+        }
+    }
+
+    /** Count of paid transactions today. */
+    public int getTodayTransactionCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM payments "
+                + "WHERE DATE(paid_at) = CURDATE() AND status = 'PAID'";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    /** Get top-selling menu item name and count for today. Returns {name, count, revenue}. */
+    public Map<String, Object> getTopSellingItem() throws SQLException {
+        Map<String, Object> result = new LinkedHashMap<>();
+        String sql = "SELECT m.name, SUM(oi.quantity) AS total_qty, "
+                + "SUM(oi.quantity * oi.unit_price) AS total_revenue "
+                + "FROM order_items oi "
+                + "JOIN orders o ON oi.order_id = o.id "
+                + "JOIN menu_items m ON oi.menu_item_id = m.id "
+                + "WHERE DATE(o.ordered_at) = CURDATE() AND o.status != 'CANCELLED' "
+                + "GROUP BY m.name ORDER BY total_qty DESC LIMIT 1";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                result.put("name", rs.getString("name"));
+                result.put("count", rs.getInt("total_qty"));
+                result.put("revenue", rs.getBigDecimal("total_revenue"));
+            }
+        }
+        return result;
+    }
+
+    /** Get recent paid transactions for report table. */
+    public List<Map<String, Object>> getRecentTransactions(int limit) throws SQLException {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT o.order_code, t.table_number, p.amount_paid, p.method, p.paid_at "
+                + "FROM payments p "
+                + "JOIN bills b ON p.bill_id = b.id "
+                + "JOIN orders o ON b.order_id = o.id "
+                + "JOIN dining_tables t ON o.table_id = t.id "
+                + "WHERE p.status = 'PAID' "
+                + "ORDER BY p.paid_at DESC LIMIT ?";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("orderCode", rs.getString("order_code"));
+                    row.put("tableNumber", rs.getString("table_number"));
+                    row.put("amount", rs.getBigDecimal("amount_paid"));
+                    row.put("method", rs.getString("method"));
+                    Timestamp ts = rs.getTimestamp("paid_at");
+                    row.put("paidAt", ts != null ? ts.toLocalDateTime() : null);
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     // ── PRIVATE HELPERS ───────────────────────────────────

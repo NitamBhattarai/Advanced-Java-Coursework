@@ -1,7 +1,7 @@
 package com.restaurantmanagementsystem.dao;
-
 import com.restaurantmanagementsystem.model.Feedback;
-import com.restaurantmanagementsystem.util.DBConnection;
+import com.restaurantmanagementsystem.utils.DBConnection;
+
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -65,6 +65,25 @@ public class FeedbackDAO {
             total += item.getOverallRating();
         }
         return (double) total / feedback.size();
+    }
+
+    public boolean toggleFlag(int feedbackId) throws SQLException {
+        String sql = "UPDATE guest_feedback SET flagged = NOT flagged WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, feedbackId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updateInternalNote(int feedbackId, String note) throws SQLException {
+        String sql = "UPDATE guest_feedback SET internal_note = ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, note);
+            ps.setInt(2, feedbackId);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     private Feedback mapRow(ResultSet rs) throws SQLException {

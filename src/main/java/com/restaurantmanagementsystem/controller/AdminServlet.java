@@ -1,14 +1,12 @@
 package com.restaurantmanagementsystem.controller;
 
-import com.restaurantManagementSystem.dao.*;
-import com.restaurantManagementSystem.model.*;
-import com.restaurantManagementSystem.model.Reservation;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Part;
+import com.restaurantmanagementsystem.dao.*;
+import com.restaurantmanagementsystem.model.*;
+import com.restaurantmanagementsystem.model.Reservation;
+import com.restaurantmanagementsystem.utils.ValidationUtil;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -16,39 +14,40 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-///**
-// * AdminController — handles all admin dashboard pages.
-// *
-// * Routes (all protected by AuthFilter):
-// * GET /admin/dashboard → overview with stats
-// * GET /admin/orders → full order list
-// * POST /admin/orders → update order status
-// * GET /admin/menu → menu items list
-// * POST /admin/menu → create/update/delete menu item
-// * GET /admin/tables → table map
-// * GET /admin/billing → billing page
-// * GET /admin/reports → revenue reports
-// * GET /admin/payments → payment records
-// * GET /admin/users → staff management
-// * POST /admin/users → create/deactivate user
-// * GET /admin/settings → system settings
-// * GET /admin/reservations → reservations list
-// *
-// * MVC Role: Controller
-// */
+/**
+ * AdminController — handles all admin dashboard pages.
+ *
+ * Routes (all protected by AuthFilter):
+ * GET /admin/dashboard → overview with stats
+ * GET /admin/orders → full order list
+ * POST /admin/orders → update order status
+ * GET /admin/menu → menu items list
+ * POST /admin/menu → create/update/delete menu item
+ * GET /admin/tables → table map
+ * GET /admin/billing → billing page
+ * GET /admin/reports → revenue reports
+ * GET /admin/payments → payment records
+ * GET /admin/users → staff management
+ * POST /admin/users → create/deactivate user
+ * GET /admin/settings → system settings
+ * GET /admin/reservations → reservations list
+ *
+ * MVC Role: Controller
+ */
 @jakarta.servlet.annotation.MultipartConfig(maxFileSize = 5242880, maxRequestSize = 10485760)
 public class AdminServlet extends HttpServlet {
 
     // ── DAOs (Model layer) ────────────────────────────────
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final com.restaurantmanagementsystem.dao.OrderDAO orderDAO = new com.restaurantmanagementsystem.dao.OrderDAO();
     private final MenuItemDAO menuDAO = new MenuItemDAO();
-    private final TableDAO tableDAO = new TableDAO();
-    private final UserDAO userDAO = new UserDAO();
-    private final PaymentDAO paymentDAO = new PaymentDAO();
+    private final com.restaurantmanagementsystem.dao.TableDAO tableDAO = new com.restaurantmanagementsystem.dao.TableDAO();
+    private final com.restaurantmanagementsystem.dao.UserDAO userDAO = new com.restaurantmanagementsystem.dao.UserDAO();
+    private final com.restaurantmanagementsystem.dao.PaymentDAO paymentDAO = new com.restaurantmanagementsystem.dao.PaymentDAO();
     private final FeedbackDAO feedbackDAO = new FeedbackDAO();
 
     // ── GET ───────────────────────────────────────────────
@@ -63,11 +62,20 @@ public class AdminServlet extends HttpServlet {
             switch (path) {
 
                 case "/admin/dashboard":
-                    List<Order> activeOrders = orderDAO.findActive();
+                    List<com.restaurantmanagementsystem.model.Order> activeOrders = orderDAO.findActive();
                     if (!activeOrders.isEmpty()) {
-                        Order firstOrder = activeOrders.get(0);
+                        com.restaurantmanagementsystem.model.Order firstOrder = activeOrders.get(0);
                         firstOrder.setItems(orderDAO.findOrderItems(firstOrder.getId()));
                     }
+                    java.util.Map<String, BigDecimal> orderTotals = new java.util.HashMap<>();
+                    com.restaurantmanagementsystem.dao.BillDAO bDaoDashboard = new com.restaurantmanagementsystem.dao.BillDAO();
+                    for (com.restaurantmanagementsystem.model.Order o : activeOrders) {
+                        com.restaurantmanagementsystem.model.Bill b = bDaoDashboard.createForOrderIfMissing(o.getId());
+                        if (b != null) {
+                            orderTotals.put(o.getTableNumber(), b.getTotal());
+                        }
+                    }
+                    req.setAttribute("orderTotals", orderTotals);
                     req.setAttribute("orders", activeOrders);
                     req.setAttribute("tables", tableDAO.findAll());
                     req.setAttribute("todayRevenue", orderDAO.getTodayRevenue());
@@ -77,8 +85,8 @@ public class AdminServlet extends HttpServlet {
                     break;
 
                 case "/admin/orders":
-                    List<Order> allOrders = orderDAO.findAll();
-                    for (Order o : allOrders) {
+                    List<com.restaurantmanagementsystem.model.Order> allOrders = orderDAO.findAll();
+                    for (com.restaurantmanagementsystem.model.Order o : allOrders) {
                         o.setItems(orderDAO.findOrderItems(o.getId()));
                     }
                     req.setAttribute("orders", allOrders);
@@ -87,7 +95,7 @@ public class AdminServlet extends HttpServlet {
 
                 case "/admin/menu":
                     req.setAttribute("menuItems", menuDAO.findAll());
-                    req.setAttribute("categories", new CategoryDAO().findActive());
+                    req.setAttribute("categories", new com.restaurantmanagementsystem.dao.CategoryDAO().findActive());
                     forward(req, resp, "/pages/admin/menu.jsp");
                     break;
 
@@ -97,23 +105,41 @@ public class AdminServlet extends HttpServlet {
                     break;
 
                 case "/admin/billing":
-                    List<Order> unpaidOrders = orderDAO.findUnpaidOrders();
+                    List<com.restaurantmanagementsystem.model.Order> unpaidOrders = orderDAO.findUnpaidOrders();
                     java.util.Map<Integer, Integer> billMap = new java.util.HashMap<>();
-                    com.restaurantManagementSystem.dao.BillDAO bDao = new com.restaurantManagementSystem.dao.BillDAO();
-                    for (Order o : unpaidOrders) {
+                    com.restaurantmanagementsystem.dao.BillDAO bDao = new com.restaurantmanagementsystem.dao.BillDAO();
+                    String selectedBillingTable = req.getParameter("table");
+                    Integer selectedBillingOrderId = null;
+                    for (com.restaurantmanagementsystem.model.Order o : unpaidOrders) {
                         o.setItems(orderDAO.findOrderItems(o.getId()));
-                        com.restaurantManagementSystem.model.Bill b = bDao.findByOrderId(o.getId());
-                        if (b != null)
+                        com.restaurantmanagementsystem.model.Bill b = bDao.createForOrderIfMissing(o.getId());
+                        if (b != null) {
                             billMap.put(o.getId(), b.getId());
+                        }
+                        if (selectedBillingTable != null && selectedBillingOrderId == null
+                                && selectedBillingTable.equals(String.valueOf(o.getTableNumber()))) {
+                            selectedBillingOrderId = o.getId();
+                        }
                     }
                     req.setAttribute("orders", unpaidOrders);
                     req.setAttribute("billMap", billMap);
+                    if (selectedBillingTable != null && !selectedBillingTable.isBlank()) {
+                        req.setAttribute("selectedBillingTable", selectedBillingTable);
+                    }
+                    if (selectedBillingOrderId != null) {
+                        req.setAttribute("selectedBillingOrderId", selectedBillingOrderId);
+                    }
                     forward(req, resp, "/pages/admin/billing.jsp");
                     break;
 
                 case "/admin/reports":
                     req.setAttribute("todayRevenue", orderDAO.getTodayRevenue());
+                    req.setAttribute("todayPaidRevenue", orderDAO.getTodayPaidRevenue());
                     req.setAttribute("todayOrders", orderDAO.getTodayOrderCount());
+                    req.setAttribute("avgTicket", orderDAO.getAverageTicket());
+                    req.setAttribute("transactionCount", orderDAO.getTodayTransactionCount());
+                    req.setAttribute("topItem", orderDAO.getTopSellingItem());
+                    req.setAttribute("recentTransactions", orderDAO.getRecentTransactions(5));
                     req.setAttribute("paymentMethods", paymentDAO.getMethodCounts());
                     forward(req, resp, "/pages/admin/reports.jsp");
                     break;
@@ -134,12 +160,12 @@ public class AdminServlet extends HttpServlet {
 
                 case "/admin/reservations":
                     req.setAttribute("reservations",
-                            new com.restaurantManagementSystem.dao.ReservationDAO().findUpcoming());
+                            new com.restaurantmanagementsystem.dao.ReservationDAO().findUpcoming());
                     forward(req, resp, "/pages/admin/reservations.jsp");
                     break;
 
                 case "/admin/feedback":
-                    List<Feedback> feedback = feedbackDAO.findAll();
+                    List<com.restaurantmanagementsystem.model.Feedback> feedback = feedbackDAO.findAll();
                     req.setAttribute("feedbackList", feedback);
                     req.setAttribute("averageRating", feedbackDAO.averageRating(feedback));
                     req.setAttribute("positiveCount", feedbackDAO.countPositive(feedback));
@@ -199,16 +225,21 @@ public class AdminServlet extends HttpServlet {
             case "create": {
                 // Validate: name and price must not be blank
                 String name = req.getParameter("name");
-                String price = req.getParameter("price");
-                if (name == null || name.isBlank() || price == null || price.isBlank()) {
+                String priceInput = req.getParameter("price");
+                if (name == null || name.isBlank() || priceInput == null || priceInput.isBlank()) {
                     setFlash(req, "error", "Name and price are required.");
                     break;
                 }
-                MenuItem item = new MenuItem();
+                BigDecimal price = parseMenuPrice(priceInput);
+                if (price == null) {
+                    setFlash(req, "error", "Price must be a positive number.");
+                    break;
+                }
+                com.restaurantmanagementsystem.model.MenuItem item = new com.restaurantmanagementsystem.model.MenuItem();
                 item.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
                 item.setName(name.trim());
                 item.setDescription(req.getParameter("description"));
-                item.setPrice(new BigDecimal(price));
+                item.setPrice(price);
                 item.setEmoji(req.getParameter("emoji"));
                 item.setImageUrl(saveUploadedMenuImage(req));
                 menuDAO.create(item);
@@ -218,18 +249,23 @@ public class AdminServlet extends HttpServlet {
 
             case "update": {
                 String name = req.getParameter("name");
-                String price = req.getParameter("price");
-                if (name == null || name.isBlank() || price == null || price.isBlank()) {
+                String priceInput = req.getParameter("price");
+                if (name == null || name.isBlank() || priceInput == null || priceInput.isBlank()) {
                     setFlash(req, "error", "Name and price are required.");
                     break;
                 }
+                BigDecimal price = parseMenuPrice(priceInput);
+                if (price == null) {
+                    setFlash(req, "error", "Price must be a positive number.");
+                    break;
+                }
                 int id = Integer.parseInt(req.getParameter("id"));
-                MenuItem item = menuDAO.findById(id);
+                com.restaurantmanagementsystem.model.MenuItem item = menuDAO.findById(id);
                 if (item != null) {
                     item.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
                     item.setName(name.trim());
                     item.setDescription(req.getParameter("description"));
-                    item.setPrice(new BigDecimal(price));
+                    item.setPrice(price);
                     item.setAvailable("1".equals(req.getParameter("available")));
                     item.setEmoji(req.getParameter("emoji"));
                     String imageUrl = saveUploadedMenuImage(req);
@@ -242,14 +278,47 @@ public class AdminServlet extends HttpServlet {
                 break;
             }
 
+            case "toggle": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                com.restaurantmanagementsystem.model.MenuItem item = menuDAO.findById(id);
+                if (item != null) {
+                    item.setAvailable("1".equals(req.getParameter("available")));
+                    menuDAO.update(item);
+                    setFlash(req, "success",
+                            item.isAvailable() ? "Menu item is now active." : "Menu item is now inactive.");
+                } else {
+                    setFlash(req, "error", "Menu item was not found.");
+                }
+                break;
+            }
+
             case "delete": {
                 int id = Integer.parseInt(req.getParameter("id"));
-                menuDAO.delete(id);
-                setFlash(req, "success", "Item removed from menu.");
+                if (orderDAO.hasOrderItemsForMenuItem(id)) {
+                    setFlash(req, "error",
+                            "This item is referenced by existing orders and cannot be deleted. Mark it inactive instead.");
+                } else {
+                    try {
+                        if (menuDAO.delete(id)) {
+                            setFlash(req, "success", "Item removed from menu.");
+                        } else {
+                            setFlash(req, "error", "Menu item was not found.");
+                        }
+                    } catch (SQLIntegrityConstraintViolationException e) {
+                        setFlash(req, "error", "This item has order history and cannot be permanently removed.");
+                    }
+                }
                 break;
             }
         }
         resp.sendRedirect(req.getContextPath() + "/admin/menu");
+    }
+
+    private BigDecimal parseMenuPrice(String priceInput) {
+        if (!ValidationUtil.isPositiveDecimal(priceInput)) {
+            return null;
+        }
+        return new BigDecimal(priceInput.trim());
     }
 
     private String saveUploadedMenuImage(HttpServletRequest req) throws IOException, ServletException {
@@ -273,9 +342,15 @@ public class AdminServlet extends HttpServlet {
             throw new ServletException("Only JPG, PNG, GIF, and WEBP images are allowed.");
         }
 
-        String uploadRoot = req.getServletContext().getRealPath("/uploads/menu");
-        if (uploadRoot == null) {
-            throw new ServletException("Upload directory is not available for this deployment.");
+        // Use a stable upload directory that survives WAR redeployment.
+        // Priority: 1) context init-param "uploadDir"  2) system property "restaurant.uploadDir"
+        //           3) <user.home>/restaurant-uploads/menu
+        String uploadRoot = req.getServletContext().getInitParameter("uploadDir");
+        if (uploadRoot == null || uploadRoot.isBlank()) {
+            uploadRoot = System.getProperty("restaurant.uploadDir");
+        }
+        if (uploadRoot == null || uploadRoot.isBlank()) {
+            uploadRoot = System.getProperty("user.home") + "/restaurant-uploads/menu";
         }
 
         Files.createDirectories(Paths.get(uploadRoot));
@@ -284,7 +359,7 @@ public class AdminServlet extends HttpServlet {
         try (InputStream input = imagePart.getInputStream()) {
             Files.copy(input, destination, StandardCopyOption.REPLACE_EXISTING);
         }
-        return "/uploads/menu/" + fileName;
+        return "/menu-image?file=" + fileName;
     }
 
     // ── Order status update ───────────────────────────────
@@ -294,7 +369,7 @@ public class AdminServlet extends HttpServlet {
 
         if ("updateStatus".equals(action)) {
             int orderId = Integer.parseInt(req.getParameter("orderId"));
-            Order.Status status = Order.Status.valueOf(req.getParameter("status"));
+            com.restaurantmanagementsystem.model.Order.Status status = com.restaurantmanagementsystem.model.Order.Status.valueOf(req.getParameter("status"));
             orderDAO.updateStatus(orderId, status);
         }
         resp.sendRedirect(req.getContextPath() + "/admin/orders");
@@ -306,9 +381,42 @@ public class AdminServlet extends HttpServlet {
             throws Exception {
         if ("create".equals(action)) {
             String num = req.getParameter("tableNumber");
-            int cap = Integer.parseInt(req.getParameter("capacity"));
-            tableDAO.create(num, cap);
-            setFlash(req, "success", "Table added successfully.");
+            String capacityStr = req.getParameter("capacity");
+            if (num == null || num.isBlank() || capacityStr == null || capacityStr.isBlank()) {
+                setFlash(req, "error", "Table number and capacity are required.");
+            } else {
+                try {
+                    String cleanNum = num.trim();
+                    if (tableDAO.existsTableNumber(cleanNum)) {
+                        setFlash(req, "error", "Table number already exists.");
+                    } else {
+                        int cap = Integer.parseInt(capacityStr.trim());
+                        tableDAO.create(cleanNum, cap);
+                        setFlash(req, "success", "Table added successfully.");
+                    }
+                } catch (NumberFormatException e) {
+                    setFlash(req, "error", "Capacity must be a valid number.");
+                }
+            }
+        } else if ("delete".equals(action)) {
+            String idStr = req.getParameter("tableId");
+            if (idStr != null && !idStr.isBlank()) {
+                int id = Integer.parseInt(idStr);
+                // Check if table has active orders
+                if (!orderDAO.findActiveByTableId(id).isEmpty()) {
+                    setFlash(req, "error", "Cannot delete table with active orders.");
+                } else {
+                    try {
+                        if (tableDAO.delete(id)) {
+                            setFlash(req, "success", "Table deleted successfully.");
+                        } else {
+                            setFlash(req, "error", "Table not found.");
+                        }
+                    } catch (Exception e) {
+                        setFlash(req, "error", "This table has order history and cannot be deleted.");
+                    }
+                }
+            }
         }
         resp.sendRedirect(req.getContextPath() + "/admin/tables");
     }
@@ -339,31 +447,100 @@ public class AdminServlet extends HttpServlet {
                     break;
                 }
                 if (userDAO.emailExists(email.trim())) {
-                    setFlash(req, "error", "Email already in use.");
+                    setFlash(req, "error", "Email already exists.");
                     break;
                 }
 
-                User u = new User();
+                com.restaurantmanagementsystem.model.User u = new com.restaurantmanagementsystem.model.User();
                 u.setFullName(req.getParameter("fullName"));
                 u.setEmail(email.trim());
                 u.setUsername(username.trim());
                 u.setPassword(password);
-                u.setRole(User.Role.valueOf(req.getParameter("role")));
+                u.setRole(com.restaurantmanagementsystem.model.User.Role.valueOf(req.getParameter("role")));
                 u.setActive(true);
                 userDAO.create(u);
                 setFlash(req, "success", "User created: " + u.getFullName());
                 break;
             }
 
+            case "update": {
+                int userId = Integer.parseInt(req.getParameter("userId"));
+                String fullName = req.getParameter("fullName");
+                String email = req.getParameter("email");
+                String roleStr = req.getParameter("role");
+                boolean active = req.getParameter("active") != null;
+
+                // Validation
+                if (fullName == null || fullName.isBlank()) {
+                    setFlash(req, "error", "Full Name is required.");
+                    break;
+                }
+                if (email == null || email.isBlank()) {
+                    setFlash(req, "error", "Email is required.");
+                    break;
+                }
+
+                com.restaurantmanagementsystem.model.User existing = userDAO.findById(userId);
+                if (existing == null) {
+                    setFlash(req, "error", "User not found.");
+                    break;
+                }
+
+                // Check if email already exists on another user
+                if (!email.trim().equalsIgnoreCase(existing.getEmail()) && userDAO.emailExists(email.trim())) {
+                    setFlash(req, "error", "Email already exists.");
+                    break;
+                }
+
+                // Check self deactivation
+                com.restaurantmanagementsystem.model.User current = (com.restaurantmanagementsystem.model.User) req.getSession().getAttribute("currentUser");
+                if (current != null && current.getId() == userId && !active) {
+                    setFlash(req, "error", "You cannot deactivate your own account.");
+                    break;
+                }
+
+                existing.setFullName(fullName.trim());
+                existing.setEmail(email.trim());
+                existing.setRole(com.restaurantmanagementsystem.model.User.Role.valueOf(roleStr));
+                existing.setActive(active);
+
+                userDAO.update(existing);
+                setFlash(req, "success", "User updated: " + existing.getFullName());
+                break;
+            }
+
             case "deactivate": {
                 int userId = Integer.parseInt(req.getParameter("userId"));
-                User current = (User) req.getSession().getAttribute("currentUser");
+                com.restaurantmanagementsystem.model.User current = (com.restaurantmanagementsystem.model.User) req.getSession().getAttribute("currentUser");
                 if (current != null && current.getId() == userId) {
                     setFlash(req, "error", "You cannot deactivate your own account.");
                     break;
                 }
                 userDAO.deactivate(userId);
                 setFlash(req, "success", "User deactivated.");
+                break;
+            }
+
+            case "reactivate": {
+                int userId = Integer.parseInt(req.getParameter("userId"));
+                userDAO.reactivate(userId);
+                setFlash(req, "success", "User reactivated successfully.");
+                break;
+            }
+
+            case "delete": {
+                int userId = Integer.parseInt(req.getParameter("userId"));
+                com.restaurantmanagementsystem.model.User current = (com.restaurantmanagementsystem.model.User) req.getSession().getAttribute("currentUser");
+                if (current != null && current.getId() == userId) {
+                    setFlash(req, "error", "You cannot delete your own account.");
+                    break;
+                }
+                try {
+                    userDAO.delete(userId);
+                    setFlash(req, "success", "User deleted successfully.");
+                } catch (Exception e) {
+                    setFlash(req, "error", "Failed to delete user: " + e.getMessage());
+                }
                 break;
             }
         }
@@ -374,7 +551,7 @@ public class AdminServlet extends HttpServlet {
 
     private void handleReservationPost(HttpServletRequest req, HttpServletResponse resp, String action)
             throws Exception {
-        com.restaurantManagementSystem.dao.ReservationDAO resDAO = new com.restaurantManagementSystem.dao.ReservationDAO();
+        com.restaurantmanagementsystem.dao.ReservationDAO resDAO = new com.restaurantmanagementsystem.dao.ReservationDAO();
         switch (action == null ? "" : action) {
             case "create": {
                 Reservation res = new Reservation();
@@ -407,18 +584,34 @@ public class AdminServlet extends HttpServlet {
 
     private void handleFeedbackPost(HttpServletRequest req, HttpServletResponse resp, String action)
             throws Exception {
-        if ("create".equals(action)) {
-            Feedback feedback = new Feedback();
-            feedback.setGuestName(required(req, "guestName", "Guest name is required."));
-            feedback.setGuestEmail(req.getParameter("guestEmail"));
-            feedback.setTableNumber(req.getParameter("tableNumber"));
-            feedback.setCuisineRating(rating(req, "cuisineRating"));
-            feedback.setServiceRating(rating(req, "serviceRating"));
-            feedback.setAmbienceRating(rating(req, "ambienceRating"));
-            feedback.setOverallRating(rating(req, "overallRating"));
-            feedback.setComments(required(req, "comments", "Feedback comments are required."));
-            feedbackDAO.create(feedback);
-            setFlash(req, "success", "Feedback added for " + feedback.getGuestName() + ".");
+        switch (action == null ? "" : action) {
+            case "create": {
+                com.restaurantmanagementsystem.model.Feedback feedback = new com.restaurantmanagementsystem.model.Feedback();
+                feedback.setGuestName(required(req, "guestName", "Guest name is required."));
+                feedback.setGuestEmail(req.getParameter("guestEmail"));
+                feedback.setTableNumber(req.getParameter("tableNumber"));
+                feedback.setCuisineRating(rating(req, "cuisineRating"));
+                feedback.setServiceRating(rating(req, "serviceRating"));
+                feedback.setAmbienceRating(rating(req, "ambienceRating"));
+                feedback.setOverallRating(rating(req, "overallRating"));
+                feedback.setComments(required(req, "comments", "Feedback comments are required."));
+                feedbackDAO.create(feedback);
+                setFlash(req, "success", "Feedback added for " + feedback.getGuestName() + ".");
+                break;
+            }
+            case "flag": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                feedbackDAO.toggleFlag(id);
+                setFlash(req, "success", "Feedback flag status updated.");
+                break;
+            }
+            case "note": {
+                int id = Integer.parseInt(req.getParameter("id"));
+                String note = req.getParameter("internalNote");
+                feedbackDAO.updateInternalNote(id, note != null ? note.trim() : null);
+                setFlash(req, "success", "Internal note saved.");
+                break;
+            }
         }
         resp.sendRedirect(req.getContextPath() + "/admin/feedback");
     }
